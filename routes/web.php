@@ -11,4 +11,6 @@
 |
 */
 
-Route::get('/details', 'API\V1\AuthController@details');
+Route::get('/', function () {
+    return view('template');
+});

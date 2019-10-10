@@ -1,11 +1,12 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class User extends Authenticatable
 {
@@ -38,4 +39,22 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public static function findByUuid($uuid)
+    {
+        return static::where('uuid', $uuid)->first();
+    }
+
+
+    public static function findOrFailByUuid($uuid)
+    {
+        if($result = static::findByUuid($uuid)){
+            return $result;
+        }else{
+            throw new ModelNotFoundException('User Not Found');
+        }
+    }
+
+    
+
 }

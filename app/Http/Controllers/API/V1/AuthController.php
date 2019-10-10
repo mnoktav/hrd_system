@@ -3,25 +3,38 @@
 namespace App\Http\Controllers\API\V1;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use App\User;
+use App\Http\Controllers\ApiController;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 
-class AuthController extends Controller
+class AuthController extends ApiController
 {
-    public $successStatus = 200;
+    //Login API
+    public function login(Request $request){
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string'
+        ]);
+        $credentials = request(['email', 'password']);
 
-    public function login(){
-        if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){
-            $user = Auth::user();
-            $success['token'] =  $user->createToken('nApp')->accessToken;
-            return response()->json(['success' => $success], $this->successStatus);
+        if(!Auth::attempt($credentials)){
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
         }
-        else{
-            return response()->json(['error'=>'Unauthorised'], 401);
-        }
+            
+        $user = $request->user();
+        $tokenResult = $user->createToken('Personal Access Token');
+        $token = $tokenResult->token;
+        $token->save();
+
+        return response()->json([
+            'access_token' => $tokenResult->accessToken,
+            'token_type' => 'Bearer'
+        ]);
     }
+
 
     public function register(Request $request)
     {
@@ -42,14 +55,17 @@ class AuthController extends Controller
         $success['token'] =  $user->createToken('nApp')->accessToken;
         $success['name'] =  $user->name;
 
+        
         return response()->json(['success' => $success], $this->successStatus);
     }
 
-    public function details()
+    //Logout
+    public function logout(Request $request)
     {
-        $user = User::all();
-
-        return response()->json(['data' => $user, $this->successStatus]);
+        $request->user()->token()->revoke();
+        return response()->json([
+            'message' => 'Successfully logged out'
+        ]);
     }
 
 }
